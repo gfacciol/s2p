@@ -24,7 +24,6 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew unlink gdal libgeotiff &&  (brew install gcc || brew link --overwrite gcc) &&  brew install geographiclib fftw libgeotiff; fi
 
 install:
-  - shopt -s expand_aliases
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; pip install numpy utm bs4 requests; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install GDAL==$(gdal-config --version | awk -F'[.]' '{print $1"."$2}'); fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; pip2 install numpy utm bs4 requests; fi
