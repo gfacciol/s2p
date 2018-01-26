@@ -14,8 +14,8 @@ matrix:
       env: CPLUS_INCLUDE_PATH=/usr/include/gdal C_INCLUDE_PATH=/usr/include/gdal
     - os: osx
       language: generic
-      python: 3.5
-      env: PYTHON=3.5.1
+      python: 3.4
+      env: PYTHON=3.6.4
       env: PATH=/Library/Frameworks/GDAL.framework/Versions/2.1/unix/bin:$PATH
 
 before_install:
@@ -24,7 +24,28 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq update; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install gdal-bin libfftw3-dev libgdal-dev libgeotiff-dev geographiclib-tools libgeographiclib-dev; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update && brew install python3 && brew unlink gdal &&  (brew install gcc || brew link --overwrite gcc) &&  brew install geographiclib fftw libgeotiff; fi
-
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      brew update
+      # Per the `pyenv homebrew recommendations <https://github.com/yyuu/pyenv/wiki#suggested-build-environment>`_.
+      brew install openssl readline
+      # See https://docs.travis-ci.com/user/osx-ci-environment/#A-note-on-upgrading-packages.
+      # I didn't do this above because it works and I'm lazy.
+      brew outdated pyenv || brew upgrade pyenv
+      # virtualenv doesn't work without pyenv knowledge. venv in Python 3.3
+      # doesn't provide Pip by default. So, use `pyenv-virtualenv <https://github.com/yyuu/pyenv-virtualenv/blob/master/README.md>`_.
+      brew install pyenv-virtualenv
+      pyenv install $PYTHON
+      # I would expect something like ``pyenv init; pyenv local $PYTHON`` or
+      # ``pyenv shell $PYTHON`` would work, but ``pyenv init`` doesn't seem to
+      # modify the Bash environment. ??? So, I hand-set the variables instead.
+      export PYENV_VERSION=$PYTHON
+      export PATH="/Users/travis/.pyenv/shims:${PATH}"
+      pyenv-virtualenv venv
+      source venv/bin/activate
+      # A manual check that the correct version of Python is running.
+      python --version
+    fi
+    
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install numpy utm bs4 requests; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install GDAL==$(gdal-config --version | awk -F'[.]' '{print $1"."$2}'); fi
