@@ -69,6 +69,8 @@ cfg['dsm_projection_aggregation_strategy'] = 'kmedian' # 'old_average'
 #   'poisson_min_interpolation_with_occlusions'   # todo
 cfg['dsm_interpolation'] = None
 
+cfg['dsm_speckle_filter'] = None
+
 # sift threshold on the first over second best match ratio
 cfg['sift_match_thresh'] = 0.6
 

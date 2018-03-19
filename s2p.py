@@ -601,6 +601,14 @@ def plys_to_dsm(tile):
         raise common.RunFailure({"command": run_cmd, "environment": os.environ,
                                  "output": q})
 
+    # DSM speckle filtering
+    if cfg['dsm_speckle_filter'] is not None:
+        out_dsm_bak = out_dsm+'.bak'  # TODO DEVELOPEMENT TRACE
+        common.run('cp {} {}'.format(out_dsm, out_dsm_bak))
+        common.run('morsi square closing {0} | plambda {0} - "x isfinite x y isfinite y nan if if" -o {1}'.format(out_dsm, out_dsm))
+        common.run('remove_small_cc {} {} {} 5'.format(out_dsm, out_dsm, cfg['dsm_speckle_filter']))
+        common.run('gdalcopyproj.py {} {}'.format(out_dsm_bak, out_dsm))
+
     # fill-in holes
     if cfg['dsm_interpolation'] is not None:
         out_dsm_bak = out_dsm+'.bak'  # TODO DEVELOPEMENT TRACE
@@ -609,7 +617,7 @@ def plys_to_dsm(tile):
             common.run('bdint5pc -p 25 -a min {} {}'.format(out_dsm_bak, out_dsm))
         
         if cfg['dsm_interpolation'] == 'poisson_min_interpolation':
-            pass
+            pass # TODO  ADD CALL HERE
             #common.run("simpois -p 5 -a min %s %s" % (out_dsm, out_dsm))
         common.run('gdalcopyproj.py {} {}'.format(out_dsm_bak, out_dsm))
 

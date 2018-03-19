@@ -763,7 +763,7 @@ int main(int c, char *v[])
 	for (uint64_t i = 0; i < (uint64_t) xsize*ysize; i++) {
 		int n = x->acc[i].size();
 		//x->avg[i] = n; continue;
-		if (n<3) { continue;}
+		if (n<3) { x->avg[i] = x->max[i]; continue;}
 
 		int out_pd = 3;
 		float tmp[100000];
@@ -782,9 +782,11 @@ int main(int c, char *v[])
 		// if 3 -> NAN
 		// if 1 -> average
 		// if 2 -> upper cluster
-		x->avg[i] = y[0] < 3.0  && x->counter_non_neighbors[i] > 0 ? 
-					y[0] == 2 ? y[2] : y[1]  :
-					NAN;
+		if (y[0] < 3 && x->counter_non_neighbors[i] > 0) {
+			x->avg[i] = y[0] == 2 ? y[2] : y[1];
+		} else {
+			x->avg[i] = NAN;
+		}
 	}
 	
 

@@ -771,7 +771,7 @@ def download(to_file, from_url):
                 print(status, end=" ")
 
 
-def cargarse_basura(inputf, outputf):
+def cargarse_basura(inputf, outputf, area=200):
     se=5
     tmp1 = outputf + '1.tif'
     tmp2 = outputf + '2.tif'
@@ -781,7 +781,7 @@ def cargarse_basura(inputf, outputf):
     run('morphoop %s max %d %s' % (inputf, se, tmpM))
     run('morphoop %s min %d %s' % (inputf, se, tmp2))
     run('plambda %s %s %s "x y - fabs %d > nan z if" -o %s' % (tmp1, tmp2, inputf, 5, tmpM))
-    run('remove_small_cc %s %s %d %d' % (tmpM, outputf, 200, 5))
+    run('remove_small_cc %s %s %d %d' % (tmpM, outputf, area, 5))
     run('rm -f %s %s %s' % (tmp1, tmp2, tmpM))
 
 
