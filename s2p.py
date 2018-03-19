@@ -599,7 +599,7 @@ def plys_to_dsm(tile):
                                  "output": q})
 
     if cfg['dsm_interpolation'] == 'constant_min_interpolation':
-	common.run('bdint5pc -p 5 -a min {} {}'.format(out_dsm, out_dsm))
+        common.run('bdint5pc -p 5 -a min {} {}'.format(out_dsm, out_dsm))
 
     if cfg['dsm_interpolation'] == 'poisson_min_interpolation':
         pass

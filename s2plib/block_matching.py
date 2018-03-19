@@ -149,7 +149,7 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         common.run('plambda {0} "isfinite" -o {1}'.format(disp, mask))
 
     if algo == 'mgm_multi':
-        env['REMOVESMALLCC'] = str(cfg['stereo_speckle_filter']
+        env['REMOVESMALLCC'] = str(cfg['stereo_speckle_filter'])
         env['MINDIFF'] = '1'
         env['CENSUS_NCC_WIN'] = str(cfg['census_ncc_win'])
         env['SUBPIX'] = '2'
