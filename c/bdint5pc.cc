@@ -32,8 +32,11 @@ static float sumf(float x, float y)
 }
 
 // build a DSF of the NAN holes from image x
-static void fill_nan_reps(int *rep, float *x, int w, int h)
+static void fill_nan_reps(int *rep, int *areas, float *x, int w, int h)
 {
+	// initialize areas to 0
+	for (int i = 0; i < w*h; i++) areas[i] = 0;
+
 	adsf_begin(rep,w*h);
 
 	// remove from dsf pixels with known values in input
@@ -56,8 +59,12 @@ static void fill_nan_reps(int *rep, float *x, int w, int h)
 
 	// canonicalize dsf (after this, the DSF is not changed anymore)
 	for (int i = 0; i < w*h; i++)
-		if (rep[i] >= 0)
+		if (rep[i] >= 0) {
 			rep[i] = adsf_find(rep, w*h, i);
+			areas[rep[i]]++;
+		} else {
+			areas[i]++;
+		}
 }
 
 // fill-in holes by accumulating values at the boundary of each hole
@@ -65,7 +72,8 @@ void bdint_gen(float *x, int w, int h, accumulator_t *a, float percentile)
 {
 	// create the dsf
 	int *rep = (int*)xmalloc(w*h*sizeof*rep);
-	fill_nan_reps(rep, x, w, h);
+	int *areas= (int*)xmalloc(w*h*sizeof*areas);
+	fill_nan_reps(rep, areas, x, w, h);
 	std::vector< std::vector<float> >acc(w*h);
 
 	// initialize the accumulators
@@ -106,9 +114,12 @@ void bdint_gen(float *x, int w, int h, accumulator_t *a, float percentile)
 	for (int i = 0; i < w*h; i++)
 		if (rep[i] >= 0 && acc[rep[i]].size() > 0)
 		{
+		//if( acc[rep[i]].size() / (float) areas[rep[i]] > 0.3) 
+			{
 			int idx_last = acc[rep[i]].size() - 1;
-			int idx_p = idx_last * percentile / 100;
+			int idx_p = (int) (idx_last * percentile / 100.0);
 			x[i] = acc[rep[i]][idx_p];
+			}
 		}
 
 	//cleanup

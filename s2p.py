@@ -579,7 +579,10 @@ def plys_to_dsm(tile):
 
     clouds = '\n'.join(os.path.join(tile['dir'],n_dir, 'cloud.ply') for n_dir in tile['neighborhood_dirs'])
 
-    cmd = ['plyflatten', str(cfg['dsm_resolution']), out_dsm]
+    if cfg['dsm_projection_aggregation_strategy'] == 'old_average':
+        cmd = ['plyflatten', str(cfg['dsm_resolution']), out_dsm]
+    else:
+        cmd = ['plyflatten2', str(cfg['dsm_resolution']), out_dsm]
     cmd += ['-srcwin', '{} {} {} {}'.format(local_xoff, local_yoff,
                                             local_xsize, local_ysize)]
 
@@ -598,12 +601,17 @@ def plys_to_dsm(tile):
         raise common.RunFailure({"command": run_cmd, "environment": os.environ,
                                  "output": q})
 
-    if cfg['dsm_interpolation'] == 'constant_min_interpolation':
-        common.run('bdint5pc -p 5 -a min {} {}'.format(out_dsm, out_dsm))
-
-    if cfg['dsm_interpolation'] == 'poisson_min_interpolation':
-        pass
-        #common.run("simpois -p 5 -a min %s %s" % (out_dsm, out_dsm))
+    # fill-in holes
+    if cfg['dsm_interpolation'] is not None:
+        out_dsm_bak = out_dsm+'.bak'  # TODO DEVELOPEMENT TRACE
+        common.run('cp {} {}'.format(out_dsm, out_dsm_bak))
+        if cfg['dsm_interpolation'] == 'constant_min_interpolation':
+            common.run('bdint5pc -p 25 -a min {} {}'.format(out_dsm_bak, out_dsm))
+        
+        if cfg['dsm_interpolation'] == 'poisson_min_interpolation':
+            pass
+            #common.run("simpois -p 5 -a min %s %s" % (out_dsm, out_dsm))
+        common.run('gdalcopyproj.py {} {}'.format(out_dsm_bak, out_dsm))
 
     # ls files | ./bin/plyflatten [-c column] [-srcwin "xoff yoff xsize ysize"] resolution out.tif
 

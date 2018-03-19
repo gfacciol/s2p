@@ -59,6 +59,9 @@ cfg['dsm_radius'] = 0
 # (dsm_resolution by default)
 cfg['dsm_sigma'] = None
 
+# plyflatten strategy: average (old_average), or kmedians (upper cluster)
+cfg['dsm_projection_aggregation_strategy'] = 'kmedian' # 'old_average'
+
 # fill-in larger holes in the DSM: 
 #   None,  # don't interpolate
 #   'constant_min_interpolation',         # bdint5pc

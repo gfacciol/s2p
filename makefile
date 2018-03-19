@@ -121,7 +121,7 @@ SRCIIO = downsa backflow synflow imprintf iion qauto qeasy crop bdint morsi\
 	remove_small_cc plambda homwarp
 SRCFFT = gblur blur fftconvolve zoom_zeropadding zoom_2d
 SRCKKK = watermask disp_to_h colormesh disp2ply multidisp2ply  bin2asc siftu ransac srtm4\
-	srtm4_which_tile plyflatten plyextrema plytodsm bdint5pc 
+	srtm4_which_tile plyflatten plyextrema plytodsm bdint5pc plyflatten2
 
 imscript: $(BINDIR) $(PROGRAMS)
 

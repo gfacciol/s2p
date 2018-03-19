@@ -148,18 +148,71 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         # map
         common.run('plambda {0} "isfinite" -o {1}'.format(disp, mask))
 
-    if algo == 'mgm_multi':
-        env['REMOVESMALLCC'] = str(cfg['stereo_speckle_filter'])
-        env['MINDIFF'] = '1'
+    if algo == 'mgm_lsd':
+
+
+        if 0: # USELESS to denoise the images before LSD. It might be useful for gradient based weights ... perhaps 
+        	ref = common.tmpfile('.tif')
+        	sec = common.tmpfile('.tif')
+        	env['OMP_NUM_THREADS'] = '1'
+        	common.run('nl-bayes 20 %s %s'%(im1,ref),env)
+        	common.run('nl-bayes 20 %s %s'%(im2,sec),env)
+        else:
+                ref = im1
+                sec = im2
+
+        wref = common.tmpfile('.tif')
+        wsec = common.tmpfile('.tif')
+        # TODO TUNE LSD PARAMETERS TO HANDLE DIRECTLY 12 bits images?
+        # image dependent weights based on lsd segments
+        image_size = common.image_size_gdal(ref)
+        common.run('qauto %s | \
+                   lsd  -  - | \
+                   cut -d\' \' -f1,2,3,4   | \
+                   pview segments %d %d | \
+                   plambda -  "255 x - 255 / 2 pow 0.1 fmax" -o %s'%(ref,image_size[0], image_size[1],wref))
+        # image dependent weights based on lsd segments
+        image_size = common.image_size_gdal(sec)
+        common.run('qauto %s | \
+                   lsd  -  - | \
+                   cut -d\' \' -f1,2,3,4   | \
+                   pview segments %d %d | \
+                   plambda -  "255 x - 255 / 2 pow 0.1 fmax" -o %s'%(sec,image_size[0], image_size[1],wsec))
+
+
+        env['MEDIAN'] = '1'
         env['CENSUS_NCC_WIN'] = str(cfg['census_ncc_win'])
-        env['SUBPIX'] = '2'
-        p1 = 8*cfg['stereo_regularity_multiplier']   # penalizes disparity changes of 1 between neighbor pixels
-        p2 = 32*cfg['stereo_regularity_multiplier']  # penalizes disparity changes of more than 1
+        env['TSGM'] = '3'
         # it is required that p2 > p1. The larger p1, p2, the smoother the disparity
-        common.run('{0} -P1 {1} -P2 {2} -r {3} -R {4} -S 3 -s vfit -t census {5} {6} {7}'.format('mgm_multi',
-                                                                                 p1, p2,
+        regularity_multiplier = cfg['stereo_regularity_multiplier']  
+        P1 = 8*2*regularity_multiplier   # penalizes disparity changes of 1 between neighbor pixels
+        P2 = 32*2*regularity_multiplier  # penalizes disparity changes of more than 1
+        common.run('{0} -r {1} -R {2} -s vfit -t census -O 8 -P1 {7} -P2 {8} -wl {3} -wr {4} {5} {6} {9}'.format('mgm',
                                                                                  disp_min,
                                                                                  disp_max,
+                                                                                 wref,wsec,
+                                                                                 im1, im2,
+                                                                                 P1, P2,
+                                                                                 disp),
+                   env)
+
+        # produce the mask: rejected pixels are marked with nan of inf in disp
+        # map
+        common.run('plambda {0} "isfinite" -o {1}'.format(disp, mask))
+
+    if algo == 'mgm_multi':
+        env['REMOVESMALLCC'] = str(cfg['stereo_speckle_filter'])
+        #env['MINDIFF'] = '1'
+        env['CENSUS_NCC_WIN'] = str(cfg['census_ncc_win'])
+        env['SUBPIX'] = '2'
+        # it is required that p2 > p1. The larger p1, p2, the smoother the disparity
+        regularity_multiplier = cfg['stereo_regularity_multiplier']  
+        P1 = 8*regularity_multiplier   # penalizes disparity changes of 1 between neighbor pixels
+        P2 = 32*regularity_multiplier  # penalizes disparity changes of more than 1
+        common.run('{0} -r {1} -R {2} -P1 {3} -P2 {4} -O 8 -S 3 -s vfit -t census {5} {6} {7}'.format('mgm_multi',
+                                                                                 disp_min,
+                                                                                 disp_max, 
+                                                                                 P1, P2,
                                                                                  im1, im2,
                                                                                  disp),
                    env)
