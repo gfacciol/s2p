@@ -61,7 +61,7 @@ static void fill_nan_reps(int *rep, float *x, int w, int h)
 }
 
 // fill-in holes by accumulating values at the boundary of each hole
-void bdint_gen(float *x, int w, int h, accumulator_t *a)
+void bdint_gen(float *x, int w, int h, accumulator_t *a, float percentile)
 {
 	// create the dsf
 	int *rep = (int*)xmalloc(w*h*sizeof*rep);
@@ -98,19 +98,18 @@ void bdint_gen(float *x, int w, int h, accumulator_t *a)
 		}
 	}
 
-	for (int i = 0; i < w*h; i++) 
+	for (int i = 0; i < w*h; i++)
 		if (acc[i].size() >0)
 		std::sort (acc[i].begin(), acc[i].end());
 
-//	// fill-in using the computed value
-//	for (int i = 0; i < w*h; i++)
-//		if (rep[i] >= 0)
-//			x[i] = acc_v[rep[i]] / (a==sumf?acc_n[rep[i]]:1);
 	// fill-in using the computed value
 	for (int i = 0; i < w*h; i++)
-		if (rep[i] >= 0)
-			if(acc[rep[i]].size()>0)
-			x[i] = acc[rep[i]][((acc[rep[i]].size()-1)*(5))/100]; 
+		if (rep[i] >= 0 && acc[rep[i]].size() > 0)
+		{
+			int idx_last = acc[rep[i]].size() - 1;
+			int idx_p = idx_last * percentile / 100;
+			x[i] = acc[rep[i]][idx_p];
+		}
 
 	//cleanup
 	free(rep);
@@ -118,10 +117,10 @@ void bdint_gen(float *x, int w, int h, accumulator_t *a)
 	free(acc_n);
 }
 
-void bdint_gen_split(float *x, int w, int h, int pd, accumulator_t *a)
+void bdint_gen_split(float *x, int w, int h, int pd, accumulator_t *a, float p)
 {
 	for (int l = 0; l < pd; l++)
-		bdint_gen(x + w*h*l, w, h, a);
+		bdint_gen(x + w*h*l, w, h, a, p);
 }
 
 
@@ -137,12 +136,13 @@ extern "C" {
 #include "pickopt.c"
 int main(int c, char *v[])
 {
-	char *opt_a = (char*) pick_option(&c, &v, "a", "min");
-	char *filename_mask = (char*) pick_option(&c, &v, "m", "");
+	char *opt_a =         (char*)pick_option(&c, &v, "a", "min");
+	char *filename_mask = (char*)pick_option(&c, &v, "m", "");
+	float percentile =      atof(pick_option(&c, &v, "p", "5"));
 	int help_argument = (((char*)pick_option(&c, &v, "h", 0)) != 0);
 	if (help_argument || (c != 1 && c != 2 && c != 3)) {
 		fprintf(stderr, "usage:\n\t"
-			"%s [-a {min|max|avg}] [in.tiff [out.tiff]]\n", *v);
+			"%s [-a {min|max|avg}] [-p percentile] [-m mask] [in.tiff [out.tiff]]\n", *v);
 		//        0                     1        2
 		return 1;
 	}
@@ -165,8 +165,9 @@ int main(int c, char *v[])
 	accumulator_t *a = fminf;
 	if (strstr(opt_a, "ma")) a = fmaxf;
 	if (strstr(opt_a, "me") || strstr(opt_a, "av") ) a = sumf;
+    fprintf(stderr, "a(1,2) = %f\n", a(1,2));
 
-	bdint_gen_split(x, w, h, pd, a);
+	bdint_gen_split(x, w, h, pd, a, percentile);
 
 	iio_save_image_float_split(filename_out, x, w, h, pd);
 

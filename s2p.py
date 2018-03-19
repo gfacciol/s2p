@@ -598,6 +598,13 @@ def plys_to_dsm(tile):
         raise common.RunFailure({"command": run_cmd, "environment": os.environ,
                                  "output": q})
 
+    if cfg['dsm_interpolation'] == 'constant_min_interpolation':
+	common.run('bdint5pc -p 5 -a min {} {}'.format(out_dsm, out_dsm))
+
+    if cfg['dsm_interpolation'] == 'poisson_min_interpolation':
+        pass
+        #common.run("simpois -p 5 -a min %s %s" % (out_dsm, out_dsm))
+
     # ls files | ./bin/plyflatten [-c column] [-srcwin "xoff yoff xsize ysize"] resolution out.tif
 
 

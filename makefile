@@ -121,7 +121,7 @@ SRCIIO = downsa backflow synflow imprintf iion qauto qeasy crop bdint morsi\
 	remove_small_cc plambda homwarp
 SRCFFT = gblur blur fftconvolve zoom_zeropadding zoom_2d
 SRCKKK = watermask disp_to_h colormesh disp2ply multidisp2ply  bin2asc siftu ransac srtm4\
-	srtm4_which_tile plyflatten plyextrema plytodsm
+	srtm4_which_tile plyflatten plyextrema plytodsm bdint5pc 
 
 imscript: $(BINDIR) $(PROGRAMS)
 
@@ -190,6 +190,14 @@ $(SRCDIR)/geographiclib_wrapper.o: c/geographiclib_wrapper.cpp
 
 $(SRCDIR)/geoid_height_wrapper.o: c/geoid_height_wrapper.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@ -DGEOID_DATA_FILE_PATH="\"$(CURDIR)/c\""
+
+
+
+$(BINDIR)/plyflatten2: $(SRCDIR)/plyflatten2.cc 
+	        $(CXX) $(CPPFLAGS) $^ -o $@ -I $(SRCDIR) $(IIOLIBS) $(GDAL_CFLAGS) $(GDAL_LIBS)
+$(BINDIR)/bdint5pc : $(SRCDIR)/bdint5pc.cc $(SRCDIR)/iio.o
+	        $(CXX) $(CPPFLAGS) $^ -o $@ -I $(SRCDIR) $(IIOLIBS)
+
 
 # automatic dependency generation
 -include makefile.dep

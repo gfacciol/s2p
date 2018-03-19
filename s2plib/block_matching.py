@@ -149,11 +149,15 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         common.run('plambda {0} "isfinite" -o {1}'.format(disp, mask))
 
     if algo == 'mgm_multi':
-        env['REMOVESMALLCC'] = '25'
+        env['REMOVESMALLCC'] = str(cfg['stereo_speckle_filter']
         env['MINDIFF'] = '1'
         env['CENSUS_NCC_WIN'] = str(cfg['census_ncc_win'])
         env['SUBPIX'] = '2'
-        common.run('{0} -r {1} -R {2} -S 3 -s vfit -t census {3} {4} {5}'.format('mgm_multi',
+        p1 = 8*cfg['stereo_regularity_multiplier']   # penalizes disparity changes of 1 between neighbor pixels
+        p2 = 32*cfg['stereo_regularity_multiplier']  # penalizes disparity changes of more than 1
+        # it is required that p2 > p1. The larger p1, p2, the smoother the disparity
+        common.run('{0} -P1 {1} -P2 {2} -r {3} -R {4} -S 3 -s vfit -t census {5} {6} {7}'.format('mgm_multi',
+                                                                                 p1, p2,
                                                                                  disp_min,
                                                                                  disp_max,
                                                                                  im1, im2,

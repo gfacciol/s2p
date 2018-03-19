@@ -59,6 +59,13 @@ cfg['dsm_radius'] = 0
 # (dsm_resolution by default)
 cfg['dsm_sigma'] = None
 
+# fill-in larger holes in the DSM: 
+#   None,  # don't interpolate
+#   'constant_min_interpolation',         # bdint5pc
+#   'poisson_min_interpolation',          # simpois
+#   'poisson_min_interpolation_with_occlusions'   # todo
+cfg['dsm_interpolation'] = None
+
 # sift threshold on the first over second best match ratio
 cfg['sift_match_thresh'] = 0.6
 
@@ -79,13 +86,6 @@ cfg['triangulation_mode'] = 'pairwise'
 
 # use global pointing for geometric triangulation
 cfg['use_global_pointing_for_geometric_triangulation'] = False
-
-# stereo matching algorithm: 'tvl1', 'msmw', 'hirschmuller08',
-# hirschmuller08_laplacian', 'sgbm', 'mgm'
-cfg['matching_algorithm'] = 'mgm'
-
-# size of the Census NCC square windows used in mgm
-cfg['census_ncc_win'] = 5
 
 # set these params if you want to impose the disparity range manually (cfg['disp_range_method'] == 'fixed_pixel_range')
 cfg['disp_min'] = None
@@ -131,3 +131,20 @@ cfg['ll_bbx'] = ("-inf", "inf", "-inf", "inf")
 
 # use srtm to generate a watermask
 cfg['use_srtm_for_water'] = False
+
+
+### stereo matching parameters
+
+# stereo matching algorithm: 'tvl1', 'msmw', 'hirschmuller08',
+# hirschmuller08_laplacian', 'sgbm', 'mgm', 'mgm_multi'
+cfg['matching_algorithm'] = 'mgm'
+
+# size of the Census NCC square windows used in MGM
+cfg['census_ncc_win'] = 5
+
+# MGM parameter: speckle filter minimum area (REMOVESMALLCC flag)
+cfg['stereo_speckle_filter'] = 25
+
+# MGM parameter: regularity (multiplies P1 and P2)
+cfg['stereo_regularity_multiplier'] = 1.0
+
