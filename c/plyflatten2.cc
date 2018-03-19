@@ -1,7 +1,7 @@
 // take a series of ply files and produce a digital elevation map
 
 #include <assert.h>
-#include <math.h>
+#include <cmath>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
