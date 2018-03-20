@@ -763,7 +763,7 @@ int main(int c, char *v[])
 	for (uint64_t i = 0; i < (uint64_t) xsize*ysize; i++) {
 		int n = x->acc[i].size();
 		//x->avg[i] = n; continue;
-		if (n<3) { x->avg[i] = x->max[i]; continue;}
+		if (n<3) { x->avg[i] = std::isfinite(x->max[i]) ? x->max[i]: NAN; continue;}
 
 		int out_pd = 3;
 		float tmp[100000];
