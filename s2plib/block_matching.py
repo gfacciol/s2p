@@ -209,12 +209,13 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         regularity_multiplier = cfg['stereo_regularity_multiplier']  
         P1 = 8*regularity_multiplier   # penalizes disparity changes of 1 between neighbor pixels
         P2 = 32*regularity_multiplier  # penalizes disparity changes of more than 1
-        common.run('{0} -r {1} -R {2} -P1 {3} -P2 {4} -O 8 -S 3 -s vfit -t census {5} {6} {7}'.format('mgm_multi',
+        dispR = disp+'_right.tif'
+        common.run('{0} -r {1} -R {2} -P1 {3} -P2 {4} -O 8 -S 3 -s vfit -t census -Rd {8} {5} {6} {7}'.format('mgm_multi',
                                                                                  disp_min,
                                                                                  disp_max, 
                                                                                  P1, P2,
                                                                                  im1, im2,
-                                                                                 disp),
+                                                                                 disp, dispR),
                    env)
 
         # produce the mask: rejected pixels are marked with nan of inf in disp
