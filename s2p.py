@@ -579,9 +579,9 @@ def plys_to_dsm(tile):
 
     clouds = '\n'.join(os.path.join(tile['dir'],n_dir, 'cloud.ply') for n_dir in tile['neighborhood_dirs'])
 
-    if cfg['dsm_projection_aggregation_strategy'] == 'old_average':
+    if cfg['dsm_projection_aggregation_strategy'] == 'average':
         cmd = ['plyflatten', str(cfg['dsm_resolution']), out_dsm]
-    else:
+    else:   # 'kmedian'
         cmd = ['plyflatten2', str(cfg['dsm_resolution']), out_dsm]
     cmd += ['-srcwin', '{} {} {} {}'.format(local_xoff, local_yoff,
                                             local_xsize, local_ysize)]
