@@ -228,7 +228,6 @@ static void accumulate_ply_points_to_images(
 	double data[n];
 	double sigma2mult2 = 2*sigma*sigma;
 	bool updatemmx = radius == 0;
-updatemmx = true;
 
 	while ( n == get_record(f, isbin, t, n, data) )
 	{
@@ -398,8 +397,6 @@ int main(int c, char *v[])
 	for (uint64_t i = 0; i < (uint64_t) xsize*ysize; i++)
 		if (!x->cnt[i])
 			x->avg[i] = NAN;
-else 
-	x->avg[i] = x->max[i];
 
 	// save output image
 	save_output_image_with_utm_georeferencing(
