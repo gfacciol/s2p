@@ -128,9 +128,6 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 cfg['srtm_dir'] = os.path.join(parent_dir, '.srtm')
 
-# clean height maps outliers
-cfg['cargarse_basura'] = True
-
 # longitude/latitude bounding box
 cfg['ll_bbx'] = ("-inf", "inf", "-inf", "inf")
 
@@ -152,4 +149,7 @@ cfg['stereo_speckle_filter'] = 25
 
 # MGM parameter: regularity (multiplies P1 and P2)
 cfg['stereo_regularity_multiplier'] = 1.0
+
+# clean height maps outliers
+cfg['cargarse_basura'] = True
 

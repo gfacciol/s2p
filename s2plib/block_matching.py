@@ -137,11 +137,14 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         env['MEDIAN'] = '1'
         env['CENSUS_NCC_WIN'] = str(cfg['census_ncc_win'])
         env['TSGM'] = '3'
-        common.run('{0} -r {1} -R {2} -s vfit -t census -O 8 {3} {4} {5}'.format('mgm',
+        cost  = disp+'_cost.tif'
+        dispR = disp+'_right.tif'
+        costR = disp+'_right_cost.tif'
+        common.run('{0} -r {1} -R {2} -s vfit -t census -O 8 {3} {4} {5} {6} -Rd {7} -Rc {8} '.format('mgm',
                                                                                  disp_min,
                                                                                  disp_max,
                                                                                  im1, im2,
-                                                                                 disp),
+                                                                                 disp, cost, dispR, costR),
                    env)
 
         # produce the mask: rejected pixels are marked with nan of inf in disp
@@ -201,6 +204,7 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         common.run('plambda {0} "isfinite" -o {1}'.format(disp, mask))
 
     if algo == 'mgm_multi':
+        #env['OMP_NUM_THREADS'] = 4
         env['REMOVESMALLCC'] = str(cfg['stereo_speckle_filter'])
         #env['MINDIFF'] = '1'
         env['CENSUS_NCC_WIN'] = str(cfg['census_ncc_win'])
@@ -209,13 +213,15 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         regularity_multiplier = cfg['stereo_regularity_multiplier']  
         P1 = 8*regularity_multiplier   # penalizes disparity changes of 1 between neighbor pixels
         P2 = 32*regularity_multiplier  # penalizes disparity changes of more than 1
+        cost  = disp+'_cost.tif'
         dispR = disp+'_right.tif'
-        common.run('{0} -r {1} -R {2} -P1 {3} -P2 {4} -O 8 -S 3 -s vfit -t census -Rd {8} {5} {6} {7}'.format('mgm_multi',
+        costR = disp+'_right_cost.tif'
+        common.run('{0} -r {1} -R {2} -P1 {3} -P2 {4} -O 8 -S 3 -s vfit -t census {5} {6} {7} {8} -Rd {9} -Rc {10} '.format('mgm_multi',
                                                                                  disp_min,
                                                                                  disp_max, 
                                                                                  P1, P2,
                                                                                  im1, im2,
-                                                                                 disp, dispR),
+                                                                                 disp, cost, dispR, costR),
                    env)
 
         # produce the mask: rejected pixels are marked with nan of inf in disp
