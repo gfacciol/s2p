@@ -138,18 +138,20 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         env['CENSUS_NCC_WIN'] = str(cfg['census_ncc_win'])
         env['TSGM'] = '3'
         cost  = disp+'_cost.tif'
-        dispR = disp+'_right.tif'
-        costR = disp+'_right_cost.tif'
-        common.run('{0} -r {1} -R {2} -s vfit -t census -O 8 {3} {4} {5} {6} -Rd {7} -Rc {8} '.format('mgm',
+        # TODO MUST UPDATE mgm compilation
+        uniqueness = disp+'_uniqueness.tif'
+        common.run('{0} -r {1} -R {2} -s vfit -t census -O 8 {3} {4} {5} {6}'.format('mgm',
                                                                                  disp_min,
                                                                                  disp_max,
                                                                                  im1, im2,
-                                                                                 disp, cost, dispR, costR),
+                                                                                 disp, cost),
                    env)
 
         # produce the mask: rejected pixels are marked with nan of inf in disp
         # map
         common.run('plambda {0} "isfinite" -o {1}'.format(disp, mask))
+        # produce uniqueness maps TODO MUST UPDATE mgm compilation
+        #common.run('plambda {0} "x[1]  x[0] / 1.0 - 10 *" -o {1}'.format(cost, uniqueness))
 
     if algo == 'mgm_lsd':
 
@@ -216,6 +218,8 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         cost  = disp+'_cost.tif'
         dispR = disp+'_right.tif'
         costR = disp+'_right_cost.tif'
+        uniqueness = disp+'_uniqueness.tif'
+        uniquenessR = disp+'_uniqueness_right.tif'
         common.run('{0} -r {1} -R {2} -P1 {3} -P2 {4} -O 8 -S 3 -s vfit -t census {5} {6} {7} {8} -Rd {9} -Rc {10} '.format('mgm_multi',
                                                                                  disp_min,
                                                                                  disp_max, 
@@ -227,6 +231,42 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         # produce the mask: rejected pixels are marked with nan of inf in disp
         # map
         common.run('plambda {0} "isfinite" -o {1}'.format(disp, mask))
+        # produce uniqueness maps
+        common.run('plambda {0} "x[1]  x[0] 0.001 fmax / 1.0 - 10 *" -o {1}'.format(cost, uniqueness))
+        common.run('plambda {0} "x[1]  x[0] 0.001 fmax / 1.0 - 10 *" -o {1}'.format(costR, uniquenessR))
+
+    if algo == 'mgm_multi_enhanced':
+        #env['OMP_NUM_THREADS'] = 4
+        env['REMOVESMALLCC'] = str(cfg['stereo_speckle_filter'])
+        #env['MINDIFF'] = '1'
+        env['CENSUS_NCC_WIN'] = str(cfg['census_ncc_win'])
+        env['SUBPIX'] = '2'
+        # it is required that p2 > p1. The larger p1, p2, the smoother the disparity
+        regularity_multiplier = cfg['stereo_regularity_multiplier']  
+        P1 = 8*regularity_multiplier   # penalizes disparity changes of 1 between neighbor pixels
+        P2 = 32*regularity_multiplier  # penalizes disparity changes of more than 1
+        dispR = disp+'_right.tif'
+        dispL = disp+'_left.tif'
+        im1g = im1+'gray.tif'
+        im2g = im2+'gray.tif'
+
+        common.run('plambda {} "vavg" -o {}'.format(im1, im1g))
+        common.run('plambda {} "vavg" -o {}'.format(im2, im2g))
+        common.run('{0} -r {1} -R {2} -P1 {3} -P2 {4} -O 8 -S 4 -s vfit -t census -Rd {8} {5} {6} {7}'.format('mgm_multi',
+                                                                                 disp_min,
+                                                                                 disp_max, 
+                                                                                 P1, P2,
+                                                                                 im1g, im2g,
+                                                                                 dispL, dispR),
+                   env)
+
+        common.run('python /home/sdrdis/Developments/final_chain/src/test_diffusion_all.py {} {} {} {} {}'.format( im1g, dispL, im2g, dispR, disp))
+
+        # produce the mask: rejected pixels are marked with nan of inf in disp
+        # map
+        common.run('plambda {0} "isfinite" -o {1}'.format(disp, mask))
+
+
 
     if (algo == 'micmac'):
         # add micmac binaries to the PATH environment variable

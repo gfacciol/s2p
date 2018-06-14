@@ -108,6 +108,12 @@ tvl1:
 	cp 3rdparty/tvl1flow/tvl1flow $(BINDIR)
 	cp 3rdparty/tvl1flow/callTVL1.sh $(BINDIR)
 
+lsd:
+	#wget http://www.ipol.im/pub/art/2012/gjmr-lsd/lsd_1.6.zip
+	#mv lsd_1.6.zip 3rdparty
+	unzip 3rdparty/lsd_1.6.zip -d 3rdparty
+	$(MAKE) -C 3rdparty/lsd_1.6
+	cp 3rdparty/lsd_1.6/lsd $(BINDIR)
 
 
 #

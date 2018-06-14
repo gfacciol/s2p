@@ -281,6 +281,7 @@ def disparity_to_ply(tile):
     """
     out_dir = os.path.join(tile['dir'])
     ply_file = os.path.join(out_dir, 'cloud.ply')
+    ply_file_uniqueness = os.path.join(out_dir, 'cloud_uniqueness.ply')
     plyextrema = os.path.join(out_dir, 'plyextrema.txt')
     x, y, w, h = tile['coordinates']
     rpc1 = cfg['images'][0]['rpc']
@@ -321,6 +322,15 @@ def disparity_to_ply(tile):
     # compute the point cloud
     triangulation.disp_map_to_point_cloud(ply_file, disp, mask_rect, rpc1, rpc2,
                                           H_ref, H_sec, pointing, colors,
+                                          utm_zone=cfg['utm_zone'],
+                                          llbbx=tuple(cfg['ll_bbx']),
+                                          xybbx=(x, x+w, y, y+h),
+                                          xymsk=mask_orig)
+
+    # HACK to export confidence map
+    confidence = os.path.join(out_dir, 'pair_1/rectified_disp.tif_uniqueness.tif')
+    triangulation.disp_map_to_point_cloud(ply_file_uniqueness, disp, mask_rect, rpc1, rpc2,
+                                          H_ref, H_sec, pointing, confidence,
                                           utm_zone=cfg['utm_zone'],
                                           llbbx=tuple(cfg['ll_bbx']),
                                           xybbx=(x, x+w, y, y+h),
@@ -601,6 +611,37 @@ def plys_to_dsm(tile):
         raise common.RunFailure({"command": run_cmd, "environment": os.environ,
                                  "output": q})
 
+
+    # HACK TO EXPORT CONFIDENCE
+    if 1:
+        clouds = '\n'.join(os.path.join(tile['dir'],n_dir, 'cloud_uniqueness.ply') for n_dir in tile['neighborhood_dirs'])
+        out_dsm_uniqueness = os.path.join(tile['dir'], 'uniqueness.tif')
+
+        if cfg['dsm_projection_aggregation_strategy'] == 'average':
+            cmd = ['plyflatten', '-c', '3', str(cfg['dsm_resolution']), out_dsm_uniqueness]
+        else:   # 'kmedian'
+            cmd = ['plyflatten2', '-c', '3', str(cfg['dsm_resolution']), out_dsm_uniqueness]
+        cmd += ['-srcwin', '{} {} {} {}'.format(local_xoff, local_yoff,
+                                                local_xsize, local_ysize)]
+
+        cmd += ['-radius', str(cfg['dsm_radius'])]
+
+        if cfg['dsm_sigma'] is not None:
+            cmd += ['-sigma', str(cfg['dsm_sigma'])]
+
+
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+        q = p.communicate(input=clouds.encode())
+
+        run_cmd = "ls %s | %s" % (clouds.replace('\n', ' '), " ".join(cmd))
+        print ("\nRUN: %s" % run_cmd)
+
+        if p.returncode != 0:
+            raise common.RunFailure({"command": run_cmd, "environment": os.environ,
+                                     "output": q})
+
+
+
     # DSM speckle filtering
     if cfg['dsm_speckle_filter'] is not None:
         out_dsm_bak = out_dsm+'.bak'  # TODO DEVELOPEMENT TRACE
@@ -658,6 +699,27 @@ def global_dsm(tiles):
     common.run(" ".join(["gdal_translate",
                          "-co TILED=YES -co BIGTIFF=IF_SAFER",
                          "%s %s %s" % (projwin, out_dsm_vrt, out_dsm_tif)]))
+
+
+    if 1:
+        out_uni_vrt = os.path.join(cfg['out_dir'], 'uniqueness.vrt')
+        out_uni_tif = os.path.join(cfg['out_dir'], 'uniqueness.tif')
+
+        dsms_list = [os.path.join(t['dir'], 'uniqueness.tif') for t in tiles]
+        dsms = '\n'.join(d for d in dsms_list if os.path.exists(d))
+
+        input_file_list = os.path.join(cfg['out_dir'], 'gdalbuildvrt_input_file_list2.txt')
+
+        with open(input_file_list, 'w') as f:
+            f.write(dsms)
+
+        common.run("gdalbuildvrt -vrtnodata nan -input_file_list %s %s" % (input_file_list,
+                                                                           out_uni_vrt))
+
+        common.run(" ".join(["gdal_translate",
+                             "-co TILED=YES -co BIGTIFF=IF_SAFER",
+                             "%s %s %s" % (projwin, out_uni_vrt, out_uni_tif)]))
+
 
 
 # ALL_STEPS is a ordonned dictionary : key = 'stepname' : value = is_distributed (True/False)
