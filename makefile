@@ -115,6 +115,8 @@ lsd:
 	$(MAKE) -C 3rdparty/lsd_1.6
 	cp 3rdparty/lsd_1.6/lsd $(BINDIR)
 
+gdalcopyproj:
+	cp s2plib/gdalcopyproj.py $(BINDIR)
 
 #
 # rules to build the programs under the source directory
