@@ -13,7 +13,7 @@
       "h" : 700
   },
   "full_img" : false,
-  "matching_algorithm" : "mgm",
+  "matching_algorithm" : "mgm_multi_lsd",
   "horizontal_margin": 20,
   "vertical_margin": 5,
   "sift_match_thresh" : 0.6,
