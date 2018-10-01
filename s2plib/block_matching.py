@@ -181,8 +181,10 @@ def compute_disparity_map(im1, im2, disp, mask, algo, disp_min=None,
         env['CENSUS_NCC_WIN'] = str(cfg['census_ncc_win'])
         # it is required that p2 > p1. The larger p1, p2, the smoother the disparity
         regularity_multiplier = cfg['stereo_regularity_multiplier']
-        P1 = 8*2*regularity_multiplier   # penalizes disparity changes of 1 between neighbor pixels
-        P2 = 32*2*regularity_multiplier  # penalizes disparity changes of more than 1
+
+        # increasing these numbers compensates the loss of regularity after incorporating LSD weights
+        P1 = 12*regularity_multiplier   # penalizes disparity changes of 1 between neighbor pixels
+        P2 = 48*regularity_multiplier  # penalizes disparity changes of more than 1
         conf = disp+'.confidence.tif'
         common.run('{0} -r {1} -R {2} -S 6 -s vfit -t census -O 8 -P1 {7} -P2 {8} -wl {3} -wr {4} -confidence_consensusL {10} {5} {6} {9}'.format('mgm_multi',
                                                                                  disp_min,
